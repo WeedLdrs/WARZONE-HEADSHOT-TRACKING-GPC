@@ -1,0 +1,54 @@
+// Cronus Zen Script for Warzone Headshot Tracking & Recoil Control
+// Configured for Call of Duty: Warzone
+
+define ADS_BUTTON = PS4_L2;           // ADS button (L2 for PS4, change as needed)
+define FIRE_BUTTON = PS4_R2;          // Fire button (R2 for PS4, change as needed)
+define SENSITIVITY = 8;               // Aim sensitivity for head tracking
+define RECOIL_ADJUST = 15;            // Recoil adjustment factor
+define TRACKING_SPEED = 12;           // Speed for head-level tracking
+
+int recoilY = 0;                      // Track Y-axis recoil control
+int isAiming = FALSE;                 // Track ADS state
+int direction = 0;                    // Track horizontal aim direction
+
+main {
+    if(get_val(ADS_BUTTON) > 95) {    // Detect ADS state
+        isAiming = TRUE;
+    } else {
+        isAiming = FALSE;
+    }
+
+    if(isAiming) {
+        headshot_tracking();           // Enable head tracking during ADS
+        apply_recoil_control();        // Enable recoil control while firing
+    }
+}
+
+// Headshot tracking: Smooths vertical adjustments to aim at head level
+void headshot_tracking() {
+    int x_val = get_val(STICK_1_X);   // Read horizontal stick value
+    int y_val = get_val(STICK_1_Y);   // Read vertical stick value
+
+    if(abs(y_val) < TRACKING_SPEED) {
+        y_val += (y_val > 0) ? -SENSITIVITY : SENSITIVITY;
+    }
+
+    // Apply minor adjustments for tracking movement
+    if(x_val != 0) {
+        direction = (x_val > 0) ? SENSITIVITY : -SENSITIVITY;
+        x_val += direction;
+    }
+
+    set_val(STICK_1_X, x_val);        // Apply horizontal tracking
+    set_val(STICK_1_Y, y_val);        // Apply vertical tracking
+}
+
+// Recoil control: Adjusts vertical aim to reduce recoil when firing
+void apply_recoil_control() {
+    if(get_val(FIRE_BUTTON) > 0) {
+        recoilY += RECOIL_ADJUST;
+        set_val(STICK_1_Y, get_val(STICK_1_Y) - recoilY);
+    } else {
+        recoilY = 0;
+    }
+}
